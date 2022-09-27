@@ -48,6 +48,12 @@
 (s/def ::b-number number?)
 (defn greater-than-equal-zero? [number] (and (::b-number number)(<= 0 number)))
 (s/def ::greater-than-equal-zero greater-than-equal-zero?)
+
+(defn b-length2? [coll] (= (count coll) 2))
+(s/def ::b-length-two b-length2?)
+
+(defn even-entries? [coll] (even? (count coll)))
+(s/def ::even-entries even-entries?)
 ; 1. Write a function f that takes 2 or 3 parameters and a spec to validate them. It returns the nth element of a given sequence
 ; if it’s there, and nil or the third parameter (if given) if the element isn’t there. Validation:
 ;   - The first parameter must be a non-negative number
@@ -65,19 +71,37 @@
       nil)
   ))
 
+(s/fdef clojure-spec-exercises.core/two-or-three-params
+  :args (s/and ::b-length-three
+          (s/and
+            :arg-one ::greater-than-zero
+            :arg-two ::b-seqable
+            (s/cat :arg-three (s/cat :any (s/? any?))))))
 ; (s/fdef clojure-spec-exercises.core/two-or-three-params
 ;   :args (s/and ::b-length-two-to-three
-;           (s/and
-;             :arg-one ::greater-than-zero
-;             :arg-two ::b-seqable
-;             (s/cat :arg-three (s/cat :any (s/? any?))))))
-(s/fdef clojure-spec-exercises.core/two-or-three-params
-  :args (s/and ::b-length-two-to-three
-    (s/or
-      :arg-one (s/cat :number ::greater-than-equal-zero)
-      :arg-two (s/cat :coll ::b-seqable)
-      :arg-three (s/cat :any (s/? any?)))))
+;     (s/or
+;       :arg-one (s/cat :number ::greater-than-equal-zero)
+;       :arg-two (s/cat :coll ::b-seqable)
+;       :arg-three (s/cat :any (s/? any?)))))
+; (s/fdef clojure-spec-exercises.core/two-or-three-params
+;   :args (s/and ::b-length-two-to-three
+;     (s/or :arg-one (s/cat :number ::greater-than-equal-zero)
+;           :arg-two (s/cat :collection ::b-seqable)
+;           :arg-three (s/cat :any (s/? any?)))))
 
+(defn all-keywords?
+  "Takes a collection, and returns true if all the entries are keywords, false otherwise."
+  [coll]
+  (every? keyword? coll))
+(s/def ::all-keywords all-keywords?)
+
+(defn not-keywords?
+  "Takes a collection, and returns true if all the entires are NOT keywords, false otherwise."
+  [coll]
+  (if (< 0 (count (filter keyword? coll)))
+    false
+    true))
+(s/def ::not-keywords not-keywords?)
 ; 2. Write a function g that takes an arbitrary even number of arguments and returns a hash map of pairs. For instance, given :a 1 :b 2,
 ; it returns {:a 1, :b 2}. Validation (using sequences spec):
 ;   - Even number of parameters
@@ -88,7 +112,13 @@
 (defn g
   "takes an arbitrary even number of arguments, returns a hashmap of pairs"
   [& args]
+  (if (< 0 (count args)) 
+    (if (and (all-keywords? (take-nth 2 args)) (not-keywords? (take-nth 2 (rest args))))
+      (zipmap (take-nth 2 args) (take-nth 2 (rest args)))
+      )
+    {}
+    )
   )
 
 ; (s/fdef clojure-spec-exercises.core/g
-;   :args )
+;   :args ::even-entries)
